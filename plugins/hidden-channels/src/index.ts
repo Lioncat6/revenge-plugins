@@ -20,14 +20,7 @@ const skipChannels = [
 
 // Function to check if the channel is hidden
 function isHidden(channel: any | undefined) {
-    if (channel == undefined) return false;
-    if (typeof channel === 'string')
-        channel = getChannel(channel);
-    if (!channel || skipChannels.includes(channel.type)) return false;
-    channel.realCheck = true;
-    let res = !Permissions.can(constants.Permissions.VIEW_CHANNEL, channel);
-    delete channel.realCheck;
-    return res;
+   return true;
 }
 
 function onLoad() {
@@ -57,7 +50,8 @@ function onLoad() {
 
     patches.push(instead("default", ChannelMessages, (args, orig) => {
         const channel = args[0]?.channel;
-         return React.createElement(HiddenChannel, {channel});
+        if (!isHidden(channel) && typeof orig === "function") return orig(...args);
+        else return React.createElement(HiddenChannel, {channel});
     }));
 }
 
