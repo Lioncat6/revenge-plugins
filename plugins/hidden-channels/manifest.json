@@ -3,8 +3,16 @@
     "description": "Reworked from cloudburst's original script.",
     "authors": [
         {
-            "name": "cloudburst, Training Dummy",
+            "name": "cloudburst",
+            "id": "892128204150685769"
+        },
+        {
+            "name": "Training Dummy",
             "id": "601137505739472908"
+        },
+        {
+            "name": "Lioncat6",
+            "id": "917903273514663957"
         }
     ],
     "main": "src/index.ts",
