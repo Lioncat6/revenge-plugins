@@ -57,8 +57,7 @@ function onLoad() {
 
     patches.push(instead("default", ChannelMessages, (args, orig) => {
         const channel = args[0]?.channel;
-        if (!isHidden(channel) && typeof orig === "function") return orig(...args);
-        else return React.createElement(HiddenChannel, {channel});
+         return React.createElement(HiddenChannel, {channel});
     }));
 }
 
