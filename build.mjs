@@ -48,6 +48,12 @@ const plugins = [
     esbuild({ minify: true }),
 ];
 
+const ImportMap = {
+    react: "window.React",
+    // Add other global mappings here if needed
+};
+
+
 for (let plug of await readdir("./plugins")) {
     const manifest = JSON.parse(await readFile(`./plugins/${plug}/manifest.json`));
     const outPath = `./dist/${plug}/index.js`;
@@ -58,28 +64,39 @@ for (let plug of await readdir("./plugins")) {
             onwarn: () => {},
             plugins,
         });
-    
-        await bundle.write({
-            file: outPath,
-            globals(id) {
-                if (id.startsWith("@vendetta")) return id.substring(1).replace(/\//g, ".");
-                const map = {
-                    react: "window.React",
-                };
 
-                return map[id] || null;
-            },
-            format: "iife",
-            compact: true,
-            exports: "named",
-        });
+        const code = await bundle
+            .write({
+                file: outPath,
+                globals(id) {
+                    if (ImportMap[id]) return ImportMap[id];
+
+                    const replaceSlashWithDot = (s) => s.replaceAll('/', '.');
+
+                    if (id.startsWith('@vendetta')) return replaceSlashWithDot(id.substring(1));
+                    if (id.startsWith('@revenge-mod')) return `bunny${replaceSlashWithDot(id.substring(12))}`;
+                    if (id.startsWith('@revenge-mod/revenge/src')) {
+                        console.warn('Importing from `node_modules`, please change.');
+                        const path = id.substring(25);
+                        if (path.startsWith('metro')) return `bunny.${replaceSlashWithDot(path)}`;
+                        if (path.startsWith('lib')) return `bunny.${replaceSlashWithDot(path.substring(3))}`;
+                        console.warn(`Unable to resolve import path for "${path}"!`);
+                    }
+
+                    throw new Error(`Unable to resolve import path for: ${id}`);
+                },
+                format: 'iife',
+                compact: true,
+                exports: 'named',
+            })
+            .then(result => result.output[0].code);
+
         await bundle.close();
-    
-        const toHash = await readFile(outPath);
-        manifest.hash = createHash("sha256").update(toHash).digest("hex");
-        manifest.main = "index.js";
+
+        manifest.main = 'index.js';
+        manifest.hash = createHash("sha256").update(code).digest("hex");
         await writeFile(`./dist/${plug}/manifest.json`, JSON.stringify(manifest));
-    
+
         console.log(`Successfully built ${manifest.name}!`);
     } catch (e) {
         console.error("Failed to build plugin...", e);

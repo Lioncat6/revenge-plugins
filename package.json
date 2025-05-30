@@ -4,9 +4,7 @@
 		"build": "node build.mjs"
 	},
 	"dependencies": {
-		"@swc/helpers": "^0.4.14"
-	},
-	"devDependencies": {
+		"@revenge-mod/revenge": "github:revenge-mod/revenge",
 		"@rollup/plugin-commonjs": "^24.0.0",
 		"@rollup/plugin-node-resolve": "^15.0.1",
 		"@swc/core": "^1.3.35",
@@ -14,6 +12,9 @@
 		"rollup": "^3.9.1",
 		"rollup-plugin-esbuild": "^5.0.0",
 		"vendetta-types": "latest"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^1.9.3"
 	},
 	"pnpm": {
 		"peerDependencyRules": {
