@@ -4,16 +4,18 @@ import HiddenChannel from "./HiddenChannel";
 
 import { after, instead } from "@vendetta/patcher";
 
-import { showToast } from "@vendetta/ui/toasts";
 import { showConfirmationAlert } from "@vendetta/ui/alerts";
 
 const Permissions = findByProps("getChannelPermissions", "can");
-const Router = findByProps("transitionToGuild");
-const Fetcher = findByProps("stores", "fetchMessages");
+// const Router = findByProps("transitionToGuild");
+// const Fetcher = findByProps("stores", "fetchMessages");
 const { ChannelTypes } = findByProps("ChannelTypes");
 const { getChannel } = findByProps("getChannel") || findByName("getChannel", false);
+const snowFlakeTimestamp = findByProps("extractTimestamp");
 
 const skipChannels = [ChannelTypes.DM, ChannelTypes.GROUP_DM, ChannelTypes.GUILD_CATEGORY];
+
+
 
 function isHidden(channel: any | undefined) {
 	if (channel == undefined) return false;
@@ -25,8 +27,7 @@ function isHidden(channel: any | undefined) {
 	return res;
 }
 
-console.log("Loaded Hidden Channels plugin");
-console.log(constants.Permissions);
+// console.log("Loaded Hidden Channels plugin");
 
 const unpatches: (() => void)[] = [];
 
@@ -35,7 +36,7 @@ export default {
 		const ChannelMessages = findByProps("ChannelMessages") || findByName("ChannelMessages", false);
 		if (!ChannelMessages) {
 			console.error("Hidden Channels plugin: 'ChannelMessages' module not found.");
-			return () => {};
+			return () => { };
 		}
 
 		unpatches.push(
@@ -46,87 +47,76 @@ export default {
 			})
 		);
 
-		unpatches.push(
-			instead("transitionToGuild", Router, (args, orig) => {
-				console.log("[HiddenChannels] Router.transitionToGuild called with args:", args);
-				const [_, channel] = args;
-				if (!isHidden(channel) && typeof orig === "function") orig(args);
-			})
-		);
+		// unpatches.push(
+		// 	instead("transitionToGuild", Router, (args, orig) => {
+		// 		console.log("[HiddenChannels] Router.transitionToGuild called with args:", args);
+		// 		const [_, channel] = args;
+		// 		if (!isHidden(channel) && typeof orig === "function") orig(args);
+		// 	})
+		// );
 
-		unpatches.push(
-			instead("fetchMessages", Fetcher, (args, orig) => {
-				console.log("[HiddenChannels] Fetcher.fetchMessages called with args:", args);
-				const [channel] = args;
-				if (!isHidden(channel) && typeof orig === "function") orig(args);
-			})
-		);
+		// unpatches.push(
+		// 	instead("fetchMessages", Fetcher, (args, orig) => {
+		// 		console.log("[HiddenChannels] Fetcher.fetchMessages called with args:", args);
+		// 		const [channel] = args;
+		// 		if (!isHidden(channel) && typeof orig === "function") orig(args);
+		// 	})
+		// );
 
-		unpatches.push(
-			instead("default", ChannelMessages, (args, orig) => {
-				console.log("[HiddenChannels] ChannelMessages.default called with args:", args);
-				const channel = args[0]?.channel;
-				console.log("[HiddenChannels] ChannelMessages.default called with:", channel, "isHidden:", isHidden(channel));
-				if (!isHidden(channel) && typeof orig === "function") return orig(...args);
-				else return React.createElement(HiddenChannel, { channel });
-			})
-		);
+		// unpatches.push(
+		// 	instead("default", ChannelMessages, (args, orig) => {
+		// 		console.log("[HiddenChannels] ChannelMessages.default called with args:", args);
+		// 		const channel = args[0]?.channel;
+		// 		console.log("[HiddenChannels] ChannelMessages.default called with:", channel, "isHidden:", isHidden(channel));
+		// 		if (!isHidden(channel) && typeof orig === "function") return orig(...args);
+		// 		else return React.createElement(HiddenChannel, { channel });
+		// 	})
+		// );
 
-		const Components = [
-			"ChannelScreen",
-			"ChannelView",
-			"transitionToGuild",
-			"GuildChannel",
-			"fetchMessages",
-			"Channel",
-			"Messages",
-			"getChannel",
-			"MessagesWrapper",
-			"ChannelTypes",
-			"ChannelMessages", // already tried
-			"ChannelPage",
-			"ChannelContainer",
-			// ...add more as you find them
-		];
+		// const Components = [
+		// 	"transitionToGuild",
+		// 	// "fetchMessages",
+		// 	// "Channel",
+		// 	// "Messages",
+		// 	// "getChannel",
+		// 	// "ChannelTypes",
+		// 	// "ChannelMessages", // Not working for some reason
+		// 	// "ChannelContainer",
+		// ];
 
-		for (const name of Components) {
-			const mod = findByProps(name);
-			if (mod) {
-				for (const key of Object.keys(mod)) {
-					if (typeof mod[key] === "function") {
-						instead(key, mod, (args, orig) => {
-							if (typeof args[0] === "function") {
-								console.log(`[HiddenChannels] ${name}.${key} called with function argument:`, args[0].name || "<anonymous>");
-							} else {
-								console.log(`[HiddenChannels] ${name}.${key} called`, args);
+		const transitionToGuild = findByProps("transitionToGuild");
+		if (transitionToGuild) {
+			for (const key of Object.keys(transitionToGuild)) {
+				// Yes, all of them need to be patched. No, I don't know why. The key that's actually responsible is 'forward'
+				if (typeof transitionToGuild[key] == "function") {
+					unpatches.push(
+						instead(key, transitionToGuild, (args, orig) => {
+							if (typeof args[0] == "string") {
 								let channel = getChannel(args[0]?.match(/(\d+)$/)[1]);
-								console.log(channel);
 								if (channel) {
 									if (isHidden(channel)) {
-										console.log(`[HiddenChannels] ${name}.${key} is hidden, returning HiddenChannel component.`);
-										console.log(orig.toString());
+										// console.log(key.toString())
 										showConfirmationAlert({
-											title: "This channel is hidden",
-											content: `${channel.topic_ || "No Topic."}\n\nCreation date: ${new Date(channel.id).toLocaleString()}`,
-											confirmText: "Close",
-											onConfirm: () =>
-												new Promise((res) => {
-													setTimeout(res, 5000);
-												})
+											title: "This channel is hidden.",
+											content: `${channel.topic_ || "No Topic."}\n\n**Creation date**: ${new Date(snowFlakeTimestamp.extractTimestamp(channel.id)).toLocaleString()}\n\n**Last Message**: ${channel.lastMessageId ? new Date(snowFlakeTimestamp.extractTimestamp(channel.lastMessageId)).toLocaleString() : "No messages."}\n\n**Last Pin**: ${channel.lastPinTimestamp ? new Date(channel.lastPinTimestamp).toLocaleString() : "No pins."}`,
+											confirmText: "View Anyway",
+											cancelText: "Cancel",
+											onConfirm: () => { return orig(...args); },
 										});
 										return null;
 									}
 								}
 							}
-							console.log(`mod properties: ${Object.keys(mod).join(", ")} function ${mod[key].toString()}`);
 							return orig(...args);
-						});
-					}
+						})
+					);
 				}
-			} else {
-				console.log(`[HiddenChannels] Module ${name} not found.`);
 			}
+		} else {
+			console.warn(`[HiddenChannels] transitionToGuild not found.`);
 		}
+
+
 
 		// const ChannelContainer = findByProps("ChannelContainer") || findByName("ChannelContainer", false);
 		// if (ChannelContainer && typeof ChannelContainer.ChannelContainer === "function") {
