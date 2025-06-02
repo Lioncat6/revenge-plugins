@@ -1,10 +1,14 @@
 import { findByProps, findByName } from "@vendetta/metro";
-import { constants, React } from "@vendetta/metro/common";
+import { constants, React, ReactNative as RN } from "@vendetta/metro/common";
 import HiddenChannel from "./HiddenChannel";
+import AlertContent from "./AlertContent";
+import { Settings } from "./settings";
+import { getAssetByID, getAssetByName, getAssetIDByName } from "@vendetta/ui/assets";
 
 import { after, instead } from "@vendetta/patcher";
-
 import { showConfirmationAlert } from "@vendetta/ui/alerts";
+import { settings } from "@vendetta";
+import { storage } from "@vendetta/plugin";
 
 const Permissions = findByProps("getChannelPermissions", "can");
 // const Router = findByProps("transitionToGuild");
@@ -33,6 +37,8 @@ const unpatches: (() => void)[] = [];
 
 export default {
 	onLoad: () => {
+		storage.showIcon ??= true;
+
 		const ChannelMessages = findByProps("ChannelMessages") || findByName("ChannelMessages", false);
 		if (!ChannelMessages) {
 			console.error("Hidden Channels plugin: 'ChannelMessages' module not found.");
@@ -98,7 +104,7 @@ export default {
 										// console.log(key.toString())
 										showConfirmationAlert({
 											title: "This channel is hidden.",
-											content: `${channel.topic_ || "No Topic."}\n\n**Creation date**: ${new Date(snowFlakeTimestamp.extractTimestamp(channel.id)).toLocaleString()}\n\n**Last Message**: ${channel.lastMessageId ? new Date(snowFlakeTimestamp.extractTimestamp(channel.lastMessageId)).toLocaleString() : "No messages."}\n\n**Last Pin**: ${channel.lastPinTimestamp ? new Date(channel.lastPinTimestamp).toLocaleString() : "No pins."}`,
+											content: React.createElement(AlertContent, { channel }),
 											confirmText: "View Anyway",
 											cancelText: "Cancel",
 											onConfirm: () => { return orig(...args); },
@@ -116,45 +122,31 @@ export default {
 			console.warn(`[HiddenChannels] transitionToGuild not found.`);
 		}
 
+		const ChannelInfo = findByName("ChannelInfo", false);
+		if (ChannelInfo && storage.showIcon) {
+			unpatches.push(
+				after("default", ChannelInfo, ([{ channel }], ret) =>
+					React.createElement(
+						React.Fragment,
+						{},
+						channel && isHidden(channel)
+							? React.createElement(
+								RN.Image,
+								{
+									source: getAssetByID(1740).id,
+									style: { width: 20, height: 20, marginRight: 4 },
+								}
+							)
+							: null,
+						ret,
+					)
+				)
+			);
+		}
 
-
-		// const ChannelContainer = findByProps("ChannelContainer") || findByName("ChannelContainer", false);
-		// if (ChannelContainer && typeof ChannelContainer.ChannelContainer === "function") {
-		// 	console.log("[HiddenChannels] Patching ChannelContainer.ChannelContainer");
-
-		// 	unpatches.push(
-		// 		instead("ChannelContainer", ChannelContainer, (args, orig) => {
-		// 			console.log("Hit");
-		// 			return orig(...args);
-		// 		})
-		// 	);
-		// }
-		// const mod = findByName("ChannelMessages", false) || findByProps("ChannelMessages");
-		// if (mod) {
-		// 	for (const key of Object.keys(mod)) {
-		// 		if (typeof mod[key] === "function") {
-		// 			after(key, mod, (args) => {
-		// 				console.log(`[HiddenChannels] ChannelMessages.${key} called`, args[0]);
-		// 			});
-		// 		}
-		// 	}
-		// }
-
-		// const ChannelContainer = findByName("ChannelContainer", false) || findByProps("ChannelContainer");
-		// if (ChannelContainer) {
-		// 	console.log("[HiddenChannels] Patching ChannelContainer");
-
-		// 	patches.push(
-		// 		instead("ChannelContainer", ChannelContainer, (args, orig) => {
-		// 			console.log("[HiddenChannels] ChannelContainer called with args:", args);
-		//             const channel = args[0]?.channel;
-		//             if (!isHidden(channel) && typeof orig === "function") return orig(...args);
-		//             else return React.createElement(HiddenChannel, { channel });
-		// 		})
-		// 	);
-		// }
 	},
 	onUnload: () => {
 		for (const unpatch of unpatches) unpatch();
 	},
+	settings: Settings,
 };
