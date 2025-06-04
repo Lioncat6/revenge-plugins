@@ -133,7 +133,7 @@ export default {
 							? React.createElement(
 								RN.Image,
 								{
-									source: getAssetByID(1740).id,
+									source: getAssetByName("ic_lock").id,
 									style: { width: 20, height: 20, marginRight: 4 },
 								}
 							)

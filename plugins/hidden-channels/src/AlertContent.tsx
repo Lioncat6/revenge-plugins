@@ -1,7 +1,7 @@
 import { stylesheet, constants, moment, toasts, clipboard } from "@vendetta/metro/common";
 import { findByProps } from "@vendetta/metro";
 import { semanticColors } from '@vendetta/ui';
-import { getAssetByName } from "@vendetta/ui/assets";
+import { getAssetByName, getAssetIDByName } from "@vendetta/ui/assets";
 import { showToast } from "@vendetta/ui/toasts";
 import { React, ReactNative as RN } from "@vendetta/metro/common";
 const {View, Text, Pressable } = findByProps("Button", "Text", "View");
@@ -46,13 +46,13 @@ function FancyDate({ date }) {
 	return (
 		<Text onPress={() => {
 				showToast(
-					moment(date).toLocaleString(), 1197
+					moment(date).toLocaleString(), getAssetIDByName("ic_clock")
 				);
 			}}
 			onLongPress={() => {
 				clipboard.setString(date.getTime().toString());
 				showToast(
-					"Copied Timestamp to Clipboard", 437
+					"Copied Timestamp to Clipboard", getAssetIDByName("ic_message_copy")
 				);
 			}} style={[MessageStyles.highlight]}>{moment(date).fromNow()}</Text>
 
