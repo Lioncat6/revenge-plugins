@@ -22,11 +22,11 @@ const skipChannels = [ChannelTypes.DM, ChannelTypes.GROUP_DM, ChannelTypes.GUILD
 
 
 function isHidden(channel: any | undefined) {
-	if (channel == undefined) return false;
+	if (channel === undefined) return false;
 	if (typeof channel === "string") channel = getChannel(channel);
 	if (!channel || skipChannels.includes(channel.type)) return false;
 	channel.realCheck = true;
-	let res = !Permissions.can(constants.Permissions.VIEW_CHANNEL, channel);
+	const res = !Permissions.can(constants.Permissions.VIEW_CHANNEL, channel);
 	delete channel.realCheck;
 	return res;
 }
@@ -94,10 +94,10 @@ export default {
 		if (transitionToGuild) {
 			for (const key of Object.keys(transitionToGuild)) {
 				// Yes, all of them need to be patched. No, I don't know why. The key that's actually responsible is 'forward'
-				if (typeof transitionToGuild[key] == "function") {
+				if (typeof transitionToGuild[key] === "function") {
 					unpatches.push(
 						instead(key, transitionToGuild, (args, orig) => {
-							if (typeof args[0] == "string") {
+							if (typeof args[0] === "string") {
 								const pathMatch = args[0].match(/(\d+)$/);
 								if (pathMatch?.[1]) {
 									const channelId = pathMatch[1];
@@ -121,7 +121,7 @@ export default {
 				}
 			}
 		} else {
-			console.warn(`[HiddenChannels] transitionToGuild not found.`);
+			console.warn("[HiddenChannels] transitionToGuild not found.");
 		}
 
 		const ChannelInfo = findByName("ChannelInfo", false);
