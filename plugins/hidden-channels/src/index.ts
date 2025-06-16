@@ -109,7 +109,7 @@ export default {
 											cancelText: "Cancel",
 											onConfirm: () => { return orig(...args); },
 										});
-										return null;
+										return {};
 									}
 								}
 							}
