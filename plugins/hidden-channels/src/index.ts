@@ -98,18 +98,20 @@ export default {
 					unpatches.push(
 						instead(key, transitionToGuild, (args, orig) => {
 							if (typeof args[0] == "string") {
-								let channel = getChannel(args[0]?.match(/(\d+)$/)[1]);
-								if (channel) {
-									if (isHidden(channel)) {
-										// console.log(key.toString())
-										showConfirmationAlert({
-											title: "This channel is hidden.",
-											content: React.createElement(AlertContent, { channel }),
-											confirmText: "View Anyway",
-											cancelText: "Cancel",
-											onConfirm: () => { return orig(...args); },
-										});
-										return {};
+								const pathMatch = args[0].match(/(\d+)$/);
+								if (pathMatch?.[1]) {
+									const channelId = pathMatch[1];
+									const channel = getChannel(channelId);
+									if (channel && isHidden(channel)) {
+                                        // console.log(key.toString())
+                                        showConfirmationAlert({
+                                            title: "This channel is hidden.",
+                                            content: React.createElement(AlertContent, { channel }),
+                                            confirmText: "View Anyway",
+                                            cancelText: "Cancel",
+                                            onConfirm: () => { return orig(...args); },
+                                        });
+                                        return {};
 									}
 								}
 							}
