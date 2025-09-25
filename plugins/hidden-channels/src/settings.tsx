@@ -19,6 +19,13 @@ export function Settings() {
 					onValueChange={(value) => (storage.showIcon = value)}
 					value={storage.showIcon}
 				/>
+				<FormSwitchRow
+					label={"Show Popup on Hidden Channels"}
+					subLabel={"Toggle the information popup that appears when selecting hidden channels."}
+					leading={<FormRow.Icon source={getAssetIDByName("ic_more_android")} />}
+					onValueChange={(value) => (storage.showPopup = value)}
+					value={storage.showPopup}
+				/>
 			</FormSection>
 		</RN.ScrollView>
 	);
