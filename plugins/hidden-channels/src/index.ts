@@ -38,7 +38,8 @@ const unpatches: (() => void)[] = [];
 export default {
 	onLoad: () => {
 		storage.showIcon ??= true;
-
+		storage.showPopup ??= true;
+		
 		const ChannelMessages = findByProps("ChannelMessages") || findByName("ChannelMessages", false);
 		if (!ChannelMessages) {
 			console.error("Hidden Channels plugin: 'ChannelMessages' module not found.");
@@ -104,13 +105,15 @@ export default {
 									const channel = getChannel(channelId);
 									if (channel && isHidden(channel)) {
                                         // console.log(key.toString())
-                                        showConfirmationAlert({
-                                            title: "This channel is hidden.",
-                                            content: React.createElement(AlertContent, { channel }),
-                                            confirmText: "View Anyway",
-                                            cancelText: "Cancel",
-                                            onConfirm: () => { return orig(...args); },
-                                        });
+										if (storage.showPopup) {
+	                                        showConfirmationAlert({
+	                                            title: "This channel is hidden.",
+	                                            content: React.createElement(AlertContent, { channel }),
+	                                            confirmText: "View Anyway",
+	                                            cancelText: "Cancel",
+	                                            onConfirm: () => { return orig(...args); },
+	                                        });
+										}
                                         return {};
 									}
 								}
